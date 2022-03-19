@@ -47,7 +47,7 @@
                 <tr>
                     <td>{{ row.id }}</td>
                     <td>{{ row.name }}</td>
-                    <td cls_id="{{ row.class_id }}">{{ row.title }}</td>
+                    <td cls_id="{{ row.classes.id }}">{{ row.classes.title }}</td>
                     {#                    <td>{{ row.class_id }}</td>#}
                     <td>
                         <a href="/user/edit_student/?nid={{ row.id }}">编辑(1)</a>

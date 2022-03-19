@@ -72,10 +72,21 @@ WSGI_APPLICATION = 'student_info.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'stu',  # 数据库库名（需提前创建好数据库）
+        'USER': 'root',  # 用户名
+        'PASSWORD': 'root',  # 连接密码
+        'HOST': '127.0.0.1',  # 主机
+        'PORT': '3306',  # mysql端口
     }
 }
 
