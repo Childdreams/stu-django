@@ -22,7 +22,7 @@ def login(request):
         user = authenticate(username=username, password=pwd)
         if user is not None:
             auth_login(request, user)
-            obj = redirect('/user/class/')
+            obj = redirect('/user/classes/')
             return obj
     else:
         return render(request, 'login.html')
@@ -389,7 +389,7 @@ def edit_teacher(request):
         # 当前教师的信息
         teacher_info = obj.get_one('select id,name from teacher where id = %s', [nid, ])
         # 当前教师的任教班级的id信息
-        class_id_list = obj.get_list('select class_id from teacher2class where teacher_id=%s', [nid, ])
+        class_id_list = obj.get_list('select classes_id from teacher2class where teacher_id=%s', [nid, ])
         # 所有的班级信息
         class_list = obj.get_list('select id,title from classes', [])
         """
@@ -400,7 +400,7 @@ def edit_teacher(request):
         obj.close()
         temp = []
         for item in class_id_list:
-            temp.append(item['class_id'])
+            temp.append(item['classes_id'])
         """
         print(temp)  # [1, 10]
         """
@@ -425,7 +425,7 @@ def edit_teacher(request):
         func = lambda nid, class_id: data_list.append((nid, class_id))
         for class_id in class_ids:
             func(nid, class_id)
-        obj.multiple_modify('insert into teacher2class(teacher_id,class_id) values (%s,%s)', data_list)
+        obj.multiple_modify('insert into teacher2class(teacher_id,classes_id) values (%s,%s)', data_list)
         return redirect('/user/teacher/')
 
 

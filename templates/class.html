@@ -31,7 +31,7 @@
         {#            <li class="active">添加班级信息</li>#}
     </ol>
     <div class="col-md-12">
-        <a class="btn btn-default " href="/user/add_class/" style="margin-bottom:5px;background: #f2dede;">添加(1)</a>
+        <a class="btn btn-default " href="/user/add_classes/" style="margin-bottom:5px;background: #f2dede;">添加(1)</a>
         <a class="btn btn-default " id="addClasses" style="margin-bottom:5px;background: #f2dede;">添加(2)</a>
         <div class="shadow hide" id="shadow"></div>
         <!--添加班级信息模态框-->
@@ -88,11 +88,11 @@
                     <td>{{ row.id }}</td>
                     <td>{{ row.title }}</td>
                     <td>
-                        <a href="/user/edit_class/?nid={{ row.id }}"
+                        <a href="/user/edit_classes/?nid={{ row.id }}"
                            style="font-weight: bold">编辑(1)</a>
                         <a href="javascript:;"
                            style="font-weight: bold" onclick="edit_class_modal(this)">编辑(2)</a>
-                        <a href="/user/del_class/?nid={{ row.id }}" style="font-weight: bold">删除(1)</a>
+                        <a href="/user/del_classes/?nid={{ row.id }}" style="font-weight: bold">删除(1)</a>
                         <a href="javascript:" style="font-weight: bold" onclick="del_class(this)">删除(2)</a>
                     </td>
                 </tr>
@@ -144,7 +144,7 @@
                         {#console.log(data)#}
                         if (data == 'ok') {
                             {#alert('添加成功！');#}
-                            location.href = '/user/class/';
+                            location.href = '/user/classes/';
                         } else {
                             $('#error').text(data);
                         }
@@ -165,7 +165,7 @@
                     },
                     success: function (data) {
                         if (data == 'ok') {
-                            location.href = '/user/class/'
+                            location.href = '/user/classes/'
                         } else {
                             $('#edit_error').text(data);
                         }
@@ -199,7 +199,7 @@
                 data: {'class_id': class_id},
                 success: function (data) {
                     if (data == 'ok') {
-                        location.href = '/user/class/'
+                        location.href = '/user/classes/'
                     } else {
                         alert('删除失败！');
                     }
