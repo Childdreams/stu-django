@@ -30,31 +30,34 @@
         <li class="active">班级管理</li>
         {#            <li class="active">添加班级信息</li>#}
     </ol>
-    <div class="col-md-12">
-        <a class="btn btn-default " href="/user/add_classes/" style="margin-bottom:5px;background: #f2dede;">添加(1)</a>
-        <a class="btn btn-default " id="addClasses" style="margin-bottom:5px;background: #f2dede;">添加(2)</a>
+    <div class="col-md-12" id="app">
+        <a class="btn btn-default " id="addClasses" style="margin-bottom:5px;background: #f2dede;">添加</a>
         <div class="shadow hide" id="shadow"></div>
-        <!--添加班级信息模态框-->
-        <div class="modal_layer hide" id="modal_layer">
-            <div class="panel panel-danger">
-                <div class="panel-heading" style="font-weight: bold">添加班级信息
-                    <button type="button" class="close" id="close_add_modal"><span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="panel-body">
-                    <form>
-                        <div class="form-group">
-                            <label for="">班级名称</label>
-                            <input type="text" name="title" class="form-control" id="class_title" placeholder=""
-                                   autofocus>
-                            <span id="error" style="color: red"></span>
-                        </div>
-                        <input type="button" class="btn" value="添加" id="add_class" style="background: #f2dede;">
-                    </form>
-                </div>
-            </div>
-        </div>
-        <!--添加班级信息模态框-->
+        <el-row>
+            <el-dialog
+                    title="添加班级信息"
+                    :visible.sync="dialogVisible"
+                    width="30%"
+                    :before-close="handleClose">
+                <span slot="footer" class="dialog-footer">
+                    <el-form ref="form" :model="form" label-width="80px">
+                          <el-form-item label="班级名称">
+                            <el-input v-model="form.title"></el-input>
+                          </el-form-item>
+                        <el-form-item label="课程名称" prop="type">
+                            <el-checkbox-group v-model="form.curr">
+                                <el-checkbox v-for="(cur,i) in curr" :label="cur.id"
+                                             name="type">{cur.name}</el-checkbox>
+                            </el-checkbox-group>
+                        </el-form-item>
+
+                    </el-form>
+                    <el-button @click="dialogVisible = false">取 消</el-button>
+                    <el-button type="primary" v-if="form.id != 0 " @click="edit_curr">确定修改</el-button>
+                    <el-button type="primary" v-else @click="edit_curr">确 定</el-button>
+                </span>
+            </el-dialog>
+        </el-row>
         <!--编辑班级信息模态框-->
         <div class="modal_layer hide" id="modal_edit">
             <div class="panel panel-danger">
@@ -70,6 +73,11 @@
                             <input type="text" name="title" class="form-control" id="edit_id" style="display: none">
                             <span id="edit_error" style="color: red"></span>
                         </div>
+                        <el-checkbox-group v-model="checkList">
+                            {% for row in curr_list %}
+                                <el-checkbox label="{{ row.id }}">{{ row.name }}</el-checkbox>
+                            {% endfor %}
+                        </el-checkbox-group>
                         <input type="button" class="btn" value="修改" id="edit_class" style="background: #f2dede;">
                     </form>
                 </div>
@@ -81,47 +89,83 @@
             <tr>
                 <th class="text-center">id</th>
                 <th class="text-center">班级名称</th>
+                <th class="text-center">班级课程</th>
                 <th class="text-center">操作</th>
             </tr>
             {% for row in class_list %}
                 <tr>
                     <td>{{ row.id }}</td>
                     <td>{{ row.title }}</td>
+                    <td> {% for item in row.cc_names %}
+                        <span>{{ item }}</span>
+                    {% endfor %}</td>
+
                     <td>
-                        <a href="/user/edit_classes/?nid={{ row.id }}"
-                           style="font-weight: bold">编辑(1)</a>
+
                         <a href="javascript:;"
-                           style="font-weight: bold" onclick="edit_class_modal(this)">编辑(2)</a>
-                        <a href="/user/del_classes/?nid={{ row.id }}" style="font-weight: bold">删除(1)</a>
-                        <a href="javascript:" style="font-weight: bold" onclick="del_class(this)">删除(2)</a>
+                           style="font-weight: bold"
+                           @click="edit_class_modal({{ row.id }},'{{ row.title }}',{{ row.cc_ids }})">编辑</a>
+                        <a href="javascript:" style="font-weight: bold" onclick="del_class(this)">删除</a>
                     </td>
                 </tr>
             {% endfor %}
         </table>
-        <!--班级信息展示-->
-{#        <nav aria-label="Page navigation">#}
-{#            <ul class="pagination">#}
-{#                <li>#}
-{#                    <a href="#" aria-label="Previous">#}
-{#                        <span aria-hidden="true">&laquo;</span>#}
-{#                    </a>#}
-{#                </li>#}
-{#                <li><a href="#">1</a></li>#}
-{#                <li><a href="#">2</a></li>#}
-{#                <li><a href="#">3</a></li>#}
-{#                <li><a href="#">4</a></li>#}
-{#                <li><a href="#">5</a></li>#}
-{#                <li>#}
-{#                    <a href="#" aria-label="Next">#}
-{#                        <span aria-hidden="true">&raquo;</span>#}
-{#                    </a>#}
-{#                </li>#}
-{#            </ul>#}
-{#        </nav>#}
+
     </div>
 {% endblock %}
 {% block js %}
     <script>
+        window.onload = function () {
+            var app = new Vue({
+                delimiters: ['{', '}'],
+                el: "#app",
+                data: {
+                    checkList: ['2'],
+
+                    form: {
+                        id: 0,
+                        name: "",
+                        curr: [],
+                    },
+                    curr: [],
+                    dialogVisible: false
+                },
+                methods: {
+                    handleClose() {
+                        this.dialogVisible = false
+                    },
+                    edit_class_modal(id, title, ids) {
+                        this.dialogVisible = true;
+                        this.form.id = id;
+                        this.form.title = title;
+                        this.form.curr = ids;
+                    },
+                    edit_curr() {
+                        $.ajax({
+                            url: '/user/edit_class_modal/',
+                            type: 'POST',
+                            contentType:'application/json',
+                            data: JSON.stringify(this.form),
+                            success: function (data) {
+
+                            }
+                        })
+                    }
+                },
+                created() {
+                    _this = this
+                    $.ajax({
+                        url: '/user/curriculum-api/',
+                        type: 'GET',
+                        success: function (data) {
+                            _data = JSON.parse(data)
+                            console.log(_data)
+                            _this.curr = _data.data
+                        }
+                    })
+                }
+            })
+        };
         $(document).ready(function () {
             //添加和编辑班级通用
             $('#shadow').click(function () {
@@ -156,21 +200,7 @@
                 $('#modal_layer').addClass('hide');
             });
             $('#edit_class').click(function () {
-                $.ajax({
-                    url: '/user/edit_class_modal/',
-                    type: 'GET',
-                    data: {
-                        'class_id': $('#edit_id').val(),
-                        'class_title': $('#edit_title').val()
-                    },
-                    success: function (data) {
-                        if (data == 'ok') {
-                            location.href = '/user/classes/'
-                        } else {
-                            $('#edit_error').text(data);
-                        }
-                    }
-                })
+
             });
             $('#close_edit_modal').click(function () {
                 $('#shadow').addClass('hide');
@@ -178,16 +208,6 @@
             });
         });
 
-        //编辑班级
-        function edit_class_modal(ths) {
-            $('#shadow').removeClass('hide');
-            $('#modal_edit').removeClass('hide');
-            var row = $(ths).parent().prevAll();
-            content_title = $(row[0]).text();
-            content_id = $(row[1]).text();
-            $('#edit_title').val(content_title);
-            $('#edit_id').val(content_id);
-        }
 
         //删除班级
         function del_class(ths) {

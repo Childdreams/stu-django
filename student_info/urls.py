@@ -22,6 +22,8 @@ urlpatterns = [
     path('user/login/', views.login),
     path('user/logout/',views.logout),
     path('user/classes/', views.classes),
+    path('user/curriculum/', views.curriculum),
+    path('user/curriculum-api/', views.curriculumApi),
     path('', views.classes),
     path('user/add_classes/', views.add_class),
     path('user/edit_classes/', views.edit_class),

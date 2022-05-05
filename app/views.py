@@ -2,7 +2,7 @@ import pymysql
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.shortcuts import render, redirect, HttpResponse
 
-from app.models import Classes, Students, Teachers, TeacherToClass
+from app.models import Classes, Students, Teachers, TeacherToClass, Curriculum, CurriculumToClasses
 from utils import sqlhelper
 import json
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -41,10 +41,29 @@ def classes(request):
     :param request:
     :return:
     """
-    class_list = Classes.objects.all()
+    curr = Curriculum.objects.all()
+    obj = sqlhelper.SqlHelper()
+    teacher_list = obj.get_list(
+        "select c.id as id ,c.title title , cc.name as cc_name,cc.id as cc_id from classes c left join curriculum2classes c2c on c2c.classes_id = c.id left join curriculum cc on cc.id = c2c.curriculum_id",
+        [])
+    result = {}
+    for row in teacher_list:
+        id = row['id']
+        if id in result:
+            result[id]['titles'].append(row['cc_name'])
+            result[id]['cc_ids'].append(row['cc_id'])
+        else:
+            result[id] = {'id': row['id'], 'title': row['title'], 'cc_names': [row['cc_name']],
+                          "cc_ids": [row["cc_id"]]}
     # [{'id': 1, 'title': '软件工程'}, {'id': 3, 'title': '网络工程'}, {'id': 4, 'title': '计算机科学与技术'}]
-
-    return render(request, 'class.html', {'class_list': class_list})
+    curr_list = []
+    for (id, name) in list(curr.values_list()):
+        curr_list.append({
+            "id" :id,
+            "name":name
+        })
+    print(json.dumps(curr_list,ensure_ascii=False))
+    return render(request, 'class.html', {'class_list': list(result.values()), "curr_list": json.dumps(curr_list,ensure_ascii=False)})
 
 
 @login_required
@@ -222,18 +241,29 @@ def edit_class_modal(request):
     模态对话框编辑班级信息
     '''
     # 获取班级编号
-    class_id = request.GET.get('class_id')
-    # 获取班级名称
-    class_title = request.GET.get('class_title')
+
+    json_body = request.body
+    json_data = json.loads(json_body)
+    print(json_data)
+
+    class_id = json_data.get('id')
+    class_title = json_data.get('name')
+    curr = json_data.get("curr")
+    print(curr)
     # 获取的名称长度要大于0
-    if len(class_title) > 0:
+    if len(class_title) > 0 or len(curr):
         # 创建连接
         Classes.objects.filter(id=class_id).update(title=class_title)
+
+        CurriculumToClasses.objects.filter(class_id = class_id).delete()
+        c = Classes.objects.filter(id=class_id).get()
+        for cur in curr:
+            CurriculumToClasses(class_id = c ,curriculum_id=cur).save()
 
         return HttpResponse('ok')
     else:
         # 返回错误提示信息
-        return HttpResponse('班级不能为空！')
+        return  HttpResponse('班级不能为空！',status=400)
 
 
 @login_required
@@ -474,3 +504,50 @@ def del_teacher_modal(request):
             ret['status'] = False
             ret['msg'] = "删除失败！"
         return HttpResponse(json.dumps(ret))
+
+
+@login_required()
+def curriculum(request):
+    """
+    课程列表
+    :param request:
+    :return:
+    """
+    if request.method == 'GET':
+        c = Curriculum.objects.all().order_by("id")
+        paginator = Paginator(c, 10)
+        current_page = request.GET.get('page')
+        try:
+            posts = paginator.page(current_page)
+        except PageNotAnInteger as e:
+            posts = paginator.page(1)
+        except EmptyPage as e:
+            posts = paginator.page(1)
+        return render(request, 'curriculum_list.html',
+                      {'posts': posts})
+
+    if request.method == "POST":
+        id = request.POST.get("id")
+        name = request.POST.get('name')
+        if int(id) != 0:
+            Curriculum.objects.filter(id=id).update(name=name)
+        else:
+            c = Curriculum(name=name)
+            c.save()
+        return HttpResponse(json.dumps({'status': True, 'msg': "OK"}))
+
+    if request.method == "DELETE":
+        id = request.DELETE.get("id")
+        Curriculum.objects.filter(id=id).delete()
+        return HttpResponse(json.dumps({'status': True, 'msg': "OK"}))
+
+def curriculumApi(request):
+    if request.method == "GET":
+        curr = Curriculum.objects.all().order_by("id")
+        curr_list = []
+        for (id, name) in list(curr.values_list()):
+            curr_list.append({
+                "id": id,
+                "name": name
+            })
+        return HttpResponse(json.dumps({'status': True, 'msg': "OK","data":curr_list}))
